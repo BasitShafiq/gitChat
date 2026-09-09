@@ -38,5 +38,25 @@ public class UserService {
     }
 
 
+    public User upsertFromGitHub(Map<String, Object> attributes, String accessToken, String scopes) {
+        Long githubId = toLong(attributes.get("id"));
+        String login = String.valueOf(attributes.get("login"));
+        String name = attributes.get("name") != null
+                ? String.valueOf(attributes.get("name"))
+                : login;
+        String avatarUrl = attributes.get("avatar_url") != null
+                ? String.valueOf(attributes.get("avatar_url"))
+                : null;
 
+        String encryptedToken = tokenEncryptor.encrypt(accessToken);
+
+        User user = userRepository.findByGithubId(githubId).orElseGet(User::new);
+        user.setGithubId(githubId);
+        user.setGithubUsername(login);
+        user.setDisplayName(name);
+        user.setAvatarUrl(avatarUrl);
+        user.setAccessToken(encryptedToken);
+        user.setTokenScopes(scopes);
+        return userRepository.save(user);
+    }
 }

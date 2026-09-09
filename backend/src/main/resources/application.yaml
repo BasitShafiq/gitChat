@@ -26,3 +26,25 @@ spring:
         model: gpt-4o-mini
       embedding:
         model: text-embedding-3-small
+
+server:
+  servlet:
+    session:
+      cookie:
+        name: DEVPILOT_SESSION
+        http-only: true
+        same-site: lax
+      timeout: 7d
+
+app:
+  frontend-url: ${FRONTEND_URL:http://localhost:3000}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
+  token-encryptor-password: ${TOKEN_ENCRYPTOR_PASSWORD:devpilot-local-encrypt-key-change-me}
+  token-encryptor-salt: ${TOKEN_ENCRYPTOR_SALT:deadbeefcafebabe}
+  indexing:
+    max-file-bytes: 102400
+    chunk-size: 800
+    chunk-overlap: 100
+  github:
+    api-delay-ms: 50
