@@ -19,7 +19,8 @@ import org.springframework.beans.factory.annotation.Value;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private GithubOAuth2UserService gitHubOAuth2UserService;
+    private final GithubOAuth2UserService gitHubOAuth2UserService;
+
     @Bean
     SecurityFilterChain securityFilterChain(
             HttpSecurity http,

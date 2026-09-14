@@ -1,6 +1,24 @@
 spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.ai.vectorstore.pgvector.autoconfigure.PgVectorStoreAutoConfiguration
+      - org.springframework.ai.openai.autoconfigure.OpenAiAutoConfiguration
+
   application:
     name: gitchat
+
+  security:
+    oauth2:
+      client:
+        registration:
+          github:
+            client-id: Ov23liUhAnrB1KGJ38tF
+            client-secret: aaa1e3d5845bae925d630d22426a440effa9fe86
+            scope:
+              - read:user
+              - user:email
+              - repo
+            user-name-attribute: id
 
   datasource:
     url: jdbc:postgresql://localhost:5433/devpilot
@@ -21,7 +39,7 @@ spring:
 
   ai:
     openai:
-      api-key: ${OPENAI_API_KEY}
+      api-key: ${OPENAI_API_KEY:SASKDK239231NMKLE21}
       chat:
         model: gpt-4o-mini
       embedding:
