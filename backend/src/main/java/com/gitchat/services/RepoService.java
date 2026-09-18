@@ -1,5 +1,6 @@
 package com.gitchat.services;
 
+import com.gitchat.dto.IndexStatusResponse;
 import com.gitchat.dto.RepositoryResponse;
 import com.gitchat.entity.Repository;
 import com.gitchat.entity.User;
@@ -84,6 +85,19 @@ public class RepoService {
                 .orElseThrow(() -> new NotFoundException("Repository not found"));
     }
 
+
+    @Transactional(readOnly = true)
+    public IndexStatusResponse status(UUID repoId, UUID userId) {
+        Repository repo = requireOwned(repoId, userId);
+        return new IndexStatusResponse(
+                repo.getId(),
+                repo.getIndexStatus(),
+                repo.getFilesTotal(),
+                repo.getFilesProcessed(),
+                repo.getChunkCount(),
+                repo.getIndexedAt(),
+                repo.getErrorMessage());
+    }
 
 
     public RepositoryResponse toResponse(Repository repo) {
