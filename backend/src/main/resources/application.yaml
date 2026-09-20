@@ -1,7 +1,6 @@
 spring:
   autoconfigure:
     exclude:
-      - org.springframework.ai.vectorstore.pgvector.autoconfigure.PgVectorStoreAutoConfiguration
       - org.springframework.ai.openai.autoconfigure.OpenAiAutoConfiguration
 
   application:
@@ -44,6 +43,14 @@ spring:
         model: gpt-4o-mini
       embedding:
         model: text-embedding-3-small
+
+    # --- PGVECTOR CONFIGURATION ---
+    vectorstore:
+      pgvector:
+        dimensions: 1536
+        distance-type: COSINE
+        index-type: HNSW
+        initialize-schema: true
 
 server:
   servlet:
