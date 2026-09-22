@@ -78,4 +78,21 @@ public class CodeFileFilter {
         String ext = fileName.substring(dot + 1);
         return ALLOWED_EXTENSIONS.contains(ext);
     }
+
+
+    public String detectLanguage(String path) {
+        String lower = path.toLowerCase(Locale.ROOT);
+        String fileName = lower.substring(lower.lastIndexOf('/') + 1);
+        if ("dockerfile".equals(fileName)) {
+            return "dockerfile";
+        }
+        if ("makefile".equals(fileName)) {
+            return "makefile";
+        }
+        int dot = fileName.lastIndexOf('.');
+        if (dot < 0) {
+            return "text";
+        }
+        return fileName.substring(dot + 1);
+    }
 }
