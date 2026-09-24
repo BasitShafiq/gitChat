@@ -5,13 +5,16 @@ import com.gitchat.entity.Repository;
 import com.gitchat.exceptions.BadRequestException;
 import com.gitchat.exceptions.NotFoundException;
 import com.gitchat.repository.RepositoryRepository;
+import com.gitchat.services.RagSettings;
 import com.gitchat.services.UserService;
 import com.gitchat.services.github.GitHubRateLimiter;
 import com.gitchat.services.github.GithubApiClient;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -114,4 +117,78 @@ public class IndexingService {
 
         markReady(repoId, filePaths.size(), processed, totalChunks, repo.getFullName());
     }
+
+    @SuppressWarnings("unchecked")
+    private List<String> listIndexableFiles(Map<String, Object> tree) {
+        if (tree == null || tree.get("tree") == null) {
+            return List.of();
+        }
+
+        List<Map<String, Object>> entries = (List<Map<String, Object>>) tree.get("tree");
+        return entries.stream()
+                .filter(entry -> "blob".equals(String.valueOf(entry.get("type"))))
+                .filter(entry -> {
+                    String path = String.valueOf(entry.get("path"));
+                    long size = entry.get("size") instanceof Number n ? n.longValue() : 0L;
+                    return fileFilter.isEligible(path, size, maxFileBytes);
+                })
+                .map(entry -> String.valueOf(entry.get("path")))
+                .toList();
+    }
+
+    private void deleteExistingVectors(String repoId) {
+        try {
+            var filter = new FilterExpressionBuilder().eq(RagSettings.METADATA_REPO_ID, repoId).build();
+            vectorStore.delete(filter);
+        } catch (Exception ex) {
+            log.warn("Could not delete existing vectors for repo {}: {}", repoId, ex.getMessage());
+        }
+    };
+
+    @Transactional
+    protected void updateProgress(
+            UUID repoId,
+            int total,
+            int processed,
+            int chunks,
+            IndexStatus status,
+            String error) {
+        repositoryRepository.findById(repoId).ifPresent(repo -> {
+            repo.setFilesTotal(total);
+            repo.setFilesProcessed(processed);
+            repo.setChunkCount(chunks);
+            repo.setIndexStatus(status);
+            repo.setErrorMessage(error);
+            repo.setUpdatedAt(Instant.now());
+            repositoryRepository.save(repo);
+        });
+    }
+
+    @Transactional
+    protected void markReady(UUID repoId, int totalFiles, int processedFiles, int totalChunks, String fullName) {
+        repositoryRepository.findById(repoId).ifPresent(repo -> {
+            repo.setIndexStatus(IndexStatus.READY);
+            repo.setFilesTotal(totalFiles);
+            repo.setFilesProcessed(processedFiles);
+            repo.setChunkCount(totalChunks);
+            repo.setIndexedAt(Instant.now());
+            repo.setErrorMessage(null);
+            repo.setUpdatedAt(Instant.now());
+            repositoryRepository.save(repo);
+        });
+        log.info("Indexed {} files ({} chunks) for {}", processedFiles, totalChunks, fullName);
+    }
+
+    @Transactional
+    protected void markFailed(UUID repoId, String message) {
+        repositoryRepository.findById(repoId).ifPresent(repo -> {
+            repo.setIndexStatus(IndexStatus.FAILED);
+            repo.setErrorMessage(message != null && message.length() > 2000
+                    ? message.substring(0, 2000)
+                    : message);
+            repo.setUpdatedAt(Instant.now());
+            repositoryRepository.save(repo);
+        });
+    }
+
 }
