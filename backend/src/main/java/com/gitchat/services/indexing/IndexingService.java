@@ -5,7 +5,7 @@ import com.gitchat.entity.Repository;
 import com.gitchat.exceptions.BadRequestException;
 import com.gitchat.exceptions.NotFoundException;
 import com.gitchat.repository.RepositoryRepository;
-import com.gitchat.services.RagSettings;
+import com.gitchat.services.ai.RagSettings;
 import com.gitchat.services.UserService;
 import com.gitchat.services.github.GitHubRateLimiter;
 import com.gitchat.services.github.GithubApiClient;

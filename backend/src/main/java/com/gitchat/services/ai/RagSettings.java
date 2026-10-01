@@ -1,4 +1,4 @@
-package com.gitchat.services;
+package com.gitchat.services.ai;
 
 
 public final class RagSettings {
